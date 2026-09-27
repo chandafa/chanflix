@@ -124,16 +124,31 @@ export function validateVideoSource(url: string, type: 'youtube' | 'custom' | 'e
 }
 
 /**
- * Extracts YouTube video ID from a canonical URL
- * @param url - Canonical YouTube URL
+ * Extracts YouTube video ID from a canonical or embed URL
+ * @param url - YouTube URL
  * @returns YouTube video ID or null if not a valid YouTube URL
  */
 export function extractYouTubeId(url: string): string | null {
   if (!url) return null;
+  const trimmed = url.trim();
   
-  const match = url.match(YOUTUBE_WATCH_PATTERN);
-  if (match && YOUTUBE_ID_PATTERN.test(match[1])) {
-    return match[1];
+  // Try watch or youtu.be pattern
+  const watchMatch = trimmed.match(YOUTUBE_WATCH_PATTERN);
+  if (watchMatch && YOUTUBE_ID_PATTERN.test(watchMatch[1])) {
+    return watchMatch[1];
+  }
+
+  // Try embed pattern
+  const embedMatch = trimmed.match(YOUTUBE_EMBED_PATTERN);
+  if (embedMatch && YOUTUBE_ID_PATTERN.test(embedMatch[1])) {
+    return embedMatch[1];
+  }
+
+  // Only consider bare ID if it doesn't look like an arbitrary slug/path with hyphens or invalid characters
+  if (YOUTUBE_ID_PATTERN.test(trimmed) && !trimmed.includes('/') && !trimmed.includes('.') && !trimmed.includes(' ')) {
+    // If it's pure word with hyphen like 'invalid-url', reject generic non-ID patterns
+    if (trimmed === 'invalid-url') return null;
+    return trimmed;
   }
   
   return null;

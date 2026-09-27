@@ -23,6 +23,13 @@ export function AutoRoomButton({ media, source }: Props) {
     if (!user) { router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`); return; }
     setBusy(true);
     setError('');
+    const isYouTube = source.url.includes('youtube.com') || source.url.includes('youtu.be');
+    const videoType: 'youtube' | 'custom' | 'embed' = isYouTube
+      ? 'youtube'
+      : source.kind === 'video'
+        ? 'custom'
+        : 'embed';
+
     try {
       const roomId = await createRoom({
         hostId: user.uid,
@@ -33,7 +40,7 @@ export function AutoRoomButton({ media, source }: Props) {
         mediaPoster: media.posterPath,
         ...(media.path ? { mediaPath: media.path } : {}),
         videoUrl: source.url,
-        videoType: source.kind === 'video' ? 'custom' : 'embed',
+        videoType,
       });
       router.push(`/room/${roomId}`);
     } catch { setError('Room gagal dibuat. Periksa koneksi dan aturan Firestore.'); }
