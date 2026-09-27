@@ -1,69 +1,12 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { ArrowRight, Users } from 'lucide-react';
+import { getTrending, getPopular } from '@/lib/tmdb';
+import { getTrendingAnime } from '@/lib/anilist';
+import { MediaCard } from '@/components/media/media-card';
+import { HeroSection } from '@/components/home/hero-section';
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+export default async function HomePage() {
+  const [movies, series, anime] = await Promise.all([getTrending('movie', 'week'), getPopular('tv'), getTrendingAnime(1, 12)]);
+  const movieItems = movies?.results || [], seriesItems = series?.results || [], animeItems = anime?.media || [];
+  return <div className="home-page">{movieItems[0] ? <HeroSection media={movieItems[0]} /> : <div className="container home-fallback"><p className="overline">Chanflix</p><h1>Cerita bagus dimulai di sini.</h1><p>Jelajahi film, serial, dan anime. Pilih yang ingin Anda tonton bersama.</p><Link href="/search" className="text-link">Cari judul <ArrowRight size={17} /></Link></div>}<div className="container home-sections"><nav className="category-nav" aria-label="Jelajahi kategori"><Link href="/movies"><span>Film</span><ArrowRight size={20} /></Link><Link href="/series"><span>Serial</span><ArrowRight size={20} /></Link><Link href="/anime"><span>Anime</span><ArrowRight size={20} /></Link></nav>{[{ title: 'Pilihan film minggu ini', href: '/movies', type: 'movie' as const, source: 'tmdb' as const, items: movieItems.slice(0, 12) }, { title: 'Serial yang ramai dibicarakan', href: '/series', type: 'tv' as const, source: 'tmdb' as const, items: seriesItems.slice(0, 12) }, { title: 'Anime untuk dijelajahi', href: '/anime', type: 'anime' as const, source: 'anilist' as const, items: animeItems.slice(0, 12) }].filter(section => section.items.length).map(section => <section className="home-section" key={section.title}><div className="home-section-head"><h2>{section.title}</h2><Link href={section.href}>Lihat semua <ArrowRight size={17} /></Link></div><div className="media-grid">{section.items.map(item => <MediaCard key={item.id} item={item} mediaType={section.type} source={section.source} />)}</div></section>)}{!movieItems.length && !seriesItems.length && !animeItems.length && <div className="empty-state"><h2>Katalog belum dapat dimuat</h2><p>Periksa koneksi atau konfigurasi TMDB dan AniList.</p></div>}<section className="home-party"><div><Users size={30} /><h2>Jarak bukan halangan untuk nonton bersama.</h2><p>Buat room, bagikan tautan, dan obrolkan adegan favorit secara langsung.</p></div><Link href="/movies">Pilih tontonan <ArrowRight size={18} /></Link></section></div></div>;
 }
